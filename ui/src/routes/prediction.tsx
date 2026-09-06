@@ -7,7 +7,6 @@ import {
   predictForTime,
   raceDistances,
 } from "../lib/race-predictor";
-import "../App.css";
 
 export const Route = createFileRoute("/prediction")({
   component: Prediction,

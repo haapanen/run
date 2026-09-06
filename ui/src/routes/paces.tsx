@@ -5,7 +5,6 @@ import {
   convertPace,
   type PaceUnit,
 } from "../lib/pace-calculator";
-import "../App.css";
 
 export const Route = createFileRoute("/paces")({
   component: Paces,

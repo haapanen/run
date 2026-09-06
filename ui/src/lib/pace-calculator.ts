@@ -71,7 +71,7 @@ export function calculatePaceChart(value: string, unit: PaceUnit) {
   const paceSeconds = parsePace(value);
   const unitDefinition = paceUnits[unit];
   const rows = Array.from({ length: 19 }, (_, index) =>
-    createPaceRow((180 + index * 15) * unitDefinition.kmPerUnit, unit),
+    createPaceRow((180 + index * 30) * unitDefinition.kmPerUnit, unit),
   );
 
   return {
