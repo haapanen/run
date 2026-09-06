@@ -3,15 +3,24 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 const RootLayout = () => (
   <>
-    <div className="p-2 flex gap-2">
-      <Link to="/" className="[&.active]:font-bold">
-        Home
-      </Link>{" "}
-      <Link to="/about" className="[&.active]:font-bold">
-        About
-      </Link>
-    </div>
-    <hr />
+    <header className="site-header">
+      <nav className="site-nav" aria-label="Main navigation">
+        <Link
+          to="/paces"
+          activeProps={{ "aria-current": "page" }}
+          className="site-nav-link"
+        >
+          Paces
+        </Link>
+        <Link
+          to="/prediction"
+          activeProps={{ "aria-current": "page" }}
+          className="site-nav-link"
+        >
+          Prediction
+        </Link>
+      </nav>
+    </header>
     <Outlet />
     <TanStackRouterDevtools />
   </>
