@@ -26,6 +26,11 @@ export type Prediction = {
   averageDistanceKm?: number;
 };
 
+export type CriticalSpeedEffort = {
+  seconds: number;
+  distanceKm: number;
+};
+
 const RIEGEL_EXPONENT = 1.06;
 
 function riegelTime(
@@ -73,31 +78,33 @@ function vdotTime(
   return (lowSeconds + highSeconds) / 2;
 }
 
-function criticalSpeedTime(
+function criticalSpeedParameters(
   previousSeconds: number,
   previousDistanceKm: number,
-  targetDistanceKm: number,
+  secondEffort?: CriticalSpeedEffort,
 ) {
-  const calibrationDistanceKm = previousDistanceKm * 2;
-  const calibrationSeconds = riegelTime(
-    previousSeconds,
-    previousDistanceKm,
-    calibrationDistanceKm,
-  );
-  const criticalSpeed =
-    (calibrationDistanceKm - previousDistanceKm) /
-    (calibrationSeconds - previousSeconds);
-  const distancePrime =
-    previousDistanceKm - criticalSpeed * previousSeconds;
+  if (
+    !secondEffort ||
+    secondEffort.seconds <= 0 ||
+    secondEffort.distanceKm <= 0 ||
+    secondEffort.seconds === previousSeconds
+  ) {
+    return undefined;
+  }
 
-  return (targetDistanceKm - distancePrime) / criticalSpeed;
+  const criticalSpeed =
+    (secondEffort.distanceKm - previousDistanceKm) /
+    (secondEffort.seconds - previousSeconds);
+  const distancePrime = previousDistanceKm - criticalSpeed * previousSeconds;
+
+  if (criticalSpeed <= 0 || distancePrime <= 0) return undefined;
+
+  return { criticalSpeed, distancePrime };
 }
 
 function cameronFactor(distanceKm: number) {
   return (
-    13.49681 -
-    0.048865 * distanceKm +
-    2.438936 / Math.pow(distanceKm, 0.7905)
+    13.49681 - 0.048865 * distanceKm + 2.438936 / Math.pow(distanceKm, 0.7905)
   );
 }
 
@@ -122,7 +129,10 @@ function heuristicTime(
   previousDistanceKm: number,
   targetDistanceKm: number,
 ) {
-  if (approximately(previousDistanceKm, 5) && approximately(targetDistanceKm, 10)) {
+  if (
+    approximately(previousDistanceKm, 5) &&
+    approximately(targetDistanceKm, 10)
+  ) {
     return previousSeconds * 2.12;
   }
   if (
@@ -155,12 +165,6 @@ const timeModels = [
     calculate: vdotTime,
   },
   {
-    name: "Critical Speed & D′",
-    shortName: "CS / D′",
-    description: "Single-race fit using a Riegel-calibrated second point",
-    calculate: criticalSpeedTime,
-  },
-  {
     name: "Dave Cameron model",
     shortName: "Cameron",
     description: "Distance-adjusted Cameron speed factors",
@@ -169,7 +173,11 @@ const timeModels = [
 ] as const;
 
 function solveDistanceForTime(
-  calculateTime: (seconds: number, distanceKm: number, targetKm: number) => number,
+  calculateTime: (
+    seconds: number,
+    distanceKm: number,
+    targetKm: number,
+  ) => number,
   previousSeconds: number,
   previousDistanceKm: number,
   targetSeconds: number,
@@ -179,7 +187,10 @@ function solveDistanceForTime(
 
   for (let iteration = 0; iteration < 80; iteration += 1) {
     const midpoint = (lowKm + highKm) / 2;
-    if (calculateTime(previousSeconds, previousDistanceKm, midpoint) < targetSeconds) {
+    if (
+      calculateTime(previousSeconds, previousDistanceKm, midpoint) <
+      targetSeconds
+    ) {
       lowKm = midpoint;
     } else {
       highKm = midpoint;
@@ -193,8 +204,13 @@ export function predictForDistance(
   previousSeconds: number,
   previousDistanceKm: number,
   targetDistanceKm: number,
+  criticalSpeedEffort?: CriticalSpeedEffort,
 ): Prediction {
-  if (previousSeconds <= 0 || previousDistanceKm <= 0 || targetDistanceKm <= 0) {
+  if (
+    previousSeconds <= 0 ||
+    previousDistanceKm <= 0 ||
+    targetDistanceKm <= 0
+  ) {
     return { models: [] };
   }
 
@@ -208,6 +224,26 @@ export function predictForDistance(
       targetDistanceKm,
     ),
   }));
+  const criticalSpeed = criticalSpeedParameters(
+    previousSeconds,
+    previousDistanceKm,
+    criticalSpeedEffort,
+  );
+  const criticalSpeedSeconds = criticalSpeed
+    ? (targetDistanceKm - criticalSpeed.distancePrime) /
+      criticalSpeed.criticalSpeed
+    : undefined;
+  models.splice(2, 0, {
+    name: "Critical Speed & D′",
+    shortName: "CS / D′",
+    description: "Two-effort linear critical speed fit",
+    ...(criticalSpeedSeconds !== undefined && criticalSpeedSeconds > 0
+      ? { seconds: criticalSpeedSeconds }
+      : {
+          unavailableReason:
+            "Enter two valid maximal efforts with different distances.",
+        }),
+  });
   const heuristic = heuristicTime(
     previousSeconds,
     previousDistanceKm,
@@ -240,6 +276,7 @@ export function predictForTime(
   previousSeconds: number,
   previousDistanceKm: number,
   targetSeconds: number,
+  criticalSpeedEffort?: CriticalSpeedEffort,
 ): Prediction {
   if (previousSeconds <= 0 || previousDistanceKm <= 0 || targetSeconds <= 0) {
     return { models: [] };
@@ -256,6 +293,25 @@ export function predictForTime(
       targetSeconds,
     ),
   }));
+  const criticalSpeed = criticalSpeedParameters(
+    previousSeconds,
+    previousDistanceKm,
+    criticalSpeedEffort,
+  );
+  const criticalSpeedDistance = criticalSpeed
+    ? criticalSpeed.distancePrime + criticalSpeed.criticalSpeed * targetSeconds
+    : undefined;
+  models.splice(2, 0, {
+    name: "Critical Speed & D′",
+    shortName: "CS / D′",
+    description: "Two-effort linear critical speed fit",
+    ...(criticalSpeedDistance !== undefined && criticalSpeedDistance > 0
+      ? { distanceKm: criticalSpeedDistance }
+      : {
+          unavailableReason:
+            "Enter two valid maximal efforts with different distances.",
+        }),
+  });
   models.push({
     name: "Practical heuristic",
     shortName: "Heuristic",
@@ -289,8 +345,17 @@ export function formatRaceTime(seconds: number | undefined) {
     : `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
+export function formatPace(seconds: number | undefined, distanceKm: number) {
+  if (distanceKm <= 0 || !Number.isFinite(distanceKm)) return "—";
+  return `${formatRaceTime(seconds === undefined ? undefined : seconds / distanceKm)} min/km`;
+}
+
 export function formatDistance(distanceKm: number | undefined) {
-  if (distanceKm === undefined || !Number.isFinite(distanceKm) || distanceKm <= 0) {
+  if (
+    distanceKm === undefined ||
+    !Number.isFinite(distanceKm) ||
+    distanceKm <= 0
+  ) {
     return "—";
   }
   return `${distanceKm.toFixed(distanceKm < 10 ? 2 : 1)} km`;

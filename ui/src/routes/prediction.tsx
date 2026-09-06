@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   formatDistance,
+  formatPace,
   formatRaceTime,
   predictForDistance,
   predictForTime,
@@ -19,9 +20,14 @@ function Prediction() {
     minutes: "25",
     seconds: "0",
   });
-  const [targetType, setTargetType] = useState<"distance" | "time">(
-    "distance",
-  );
+  const [useCriticalSpeed, setUseCriticalSpeed] = useState(false);
+  const [secondDistance, setSecondDistance] = useState("");
+  const [secondTime, setSecondTime] = useState({
+    hours: "",
+    minutes: "",
+    seconds: "",
+  });
+  const [targetType, setTargetType] = useState<"distance" | "time">("distance");
   const [targetDistance, setTargetDistance] = useState("10");
   const [targetTime, setTargetTime] = useState({
     hours: "1",
@@ -31,17 +37,25 @@ function Prediction() {
 
   const previousSeconds = timeToSeconds(previousTime);
   const targetSeconds = timeToSeconds(targetTime);
+  const criticalSpeedEffort = useCriticalSpeed
+    ? {
+        seconds: timeToSeconds(secondTime),
+        distanceKm: Number(secondDistance),
+      }
+    : undefined;
   const prediction =
     targetType === "distance"
       ? predictForDistance(
           previousSeconds,
           Number(previousDistance),
           Number(targetDistance),
+          criticalSpeedEffort,
         )
       : predictForTime(
           previousSeconds,
           Number(previousDistance),
           targetSeconds,
+          criticalSpeedEffort,
         );
   const hasResults = prediction.models.length > 0;
 
@@ -70,6 +84,32 @@ function Prediction() {
             value={previousTime}
             onChange={setPreviousTime}
           />
+          <label className="critical-speed-toggle">
+            <input
+              type="checkbox"
+              checked={useCriticalSpeed}
+              onChange={(event) => setUseCriticalSpeed(event.target.checked)}
+            />
+            <span>Use Critical Speed &amp; D′</span>
+          </label>
+          {useCriticalSpeed && (
+            <div className="critical-speed-inputs">
+              <h3>Second maximal effort</h3>
+              <DistanceField
+                id="second-distance"
+                label="Distance"
+                value={secondDistance}
+                onChange={setSecondDistance}
+                required
+              />
+              <TimeField
+                legend="Finish time"
+                value={secondTime}
+                onChange={setSecondTime}
+                required
+              />
+            </div>
+          )}
         </div>
 
         <div className="input-group">
@@ -121,7 +161,10 @@ function Prediction() {
               <span>Average</span>
               <strong>
                 {targetType === "distance"
-                  ? formatRaceTime(prediction.averageSeconds)
+                  ? `${formatRaceTime(prediction.averageSeconds)} (${formatPace(
+                      prediction.averageSeconds,
+                      Number(targetDistance),
+                    )})`
                   : formatDistance(prediction.averageDistanceKm)}
               </strong>
             </div>
@@ -132,7 +175,9 @@ function Prediction() {
           <div className="model-list">
             {prediction.models.map((model, index) => (
               <article className="model-result" key={model.shortName}>
-                <span className="model-index">{String(index + 1).padStart(2, "0")}</span>
+                <span className="model-index">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 <div className="model-copy">
                   <h3>{model.name}</h3>
                   <p>{model.description}</p>
@@ -144,7 +189,10 @@ function Prediction() {
                 ) : (
                   <strong className="model-value">
                     {targetType === "distance"
-                      ? formatRaceTime(model.seconds)
+                      ? `${formatRaceTime(model.seconds)} (${formatPace(
+                          model.seconds,
+                          Number(targetDistance),
+                        )})`
                       : formatDistance(model.distanceKm)}
                   </strong>
                 )}
@@ -152,13 +200,14 @@ function Prediction() {
             ))}
           </div>
         ) : (
-          <p className="empty-result">Enter valid race values to see predictions.</p>
+          <p className="empty-result">
+            Enter valid race values to see predictions.
+          </p>
         )}
       </section>
       <p className="prediction-note">
-        Predictions are estimates, not guarantees. The single-race CS / D′ result
-        uses a Riegel-calibrated second point; two maximal efforts are required
-        for a measured fit.
+        Predictions are estimates, not guarantees. Critical Speed &amp; D′
+        requires two maximal efforts.
       </p>
     </main>
   );
@@ -178,10 +227,12 @@ function TimeField({
   legend,
   value,
   onChange,
+  required = false,
 }: {
   legend: string;
   value: TimeValue;
   onChange: (value: TimeValue) => void;
+  required?: boolean;
 }) {
   const id = useId();
   const fields = [
@@ -202,6 +253,7 @@ function TimeField({
               inputMode="numeric"
               min="0"
               max={field.max}
+              required={required}
               value={value[field.key]}
               onChange={(event) =>
                 onChange({ ...value, [field.key]: event.target.value })
@@ -220,11 +272,13 @@ function DistanceField({
   label,
   value,
   onChange,
+  required = false,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
 }) {
   const isPreset = raceDistances.some(
     (distance) => distance.km.toString() === value,
@@ -256,6 +310,7 @@ function DistanceField({
             inputMode="decimal"
             min="0.01"
             step="0.01"
+            required={required}
             value={value}
             onChange={(event) => onChange(event.target.value)}
           />
