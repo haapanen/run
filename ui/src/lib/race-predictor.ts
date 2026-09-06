@@ -351,10 +351,16 @@ export function formatRaceTime(seconds: number | undefined) {
 
 export function formatPace(
   seconds: number | undefined,
-  distanceKm: number,
+  distanceKm: number | undefined,
   unit: DistanceUnit = "km",
 ) {
-  if (distanceKm <= 0 || !Number.isFinite(distanceKm)) return "—";
+  if (
+    distanceKm === undefined ||
+    distanceKm <= 0 ||
+    !Number.isFinite(distanceKm)
+  ) {
+    return "—";
+  }
   const distance = unit === "mi" ? distanceKm / KM_PER_MILE : distanceKm;
   return `${formatRaceTime(seconds === undefined ? undefined : seconds / distance)} min/${unit}`;
 }

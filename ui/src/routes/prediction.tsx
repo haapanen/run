@@ -189,7 +189,11 @@ function Prediction() {
                       Number(targetDistance),
                       unit,
                     )})`
-                  : formatDistance(prediction.averageDistanceKm, unit)}
+                  : `${formatDistance(prediction.averageDistanceKm, unit)} (${formatPace(
+                      targetSeconds,
+                      prediction.averageDistanceKm,
+                      unit,
+                    )})`}
               </strong>
             </div>
           )}
@@ -218,7 +222,11 @@ function Prediction() {
                           Number(targetDistance),
                           unit,
                         )})`
-                      : formatDistance(model.distanceKm, unit)}
+                      : `${formatDistance(model.distanceKm, unit)} (${formatPace(
+                          targetSeconds,
+                          model.distanceKm,
+                          unit,
+                        )})`}
                   </strong>
                 )}
               </article>
