@@ -7,6 +7,7 @@ import {
   predictForDistance,
   predictForTime,
   raceDistances,
+  type DistanceUnit,
 } from "../lib/race-predictor";
 
 export const Route = createFileRoute("/prediction")({
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/prediction")({
 });
 
 function Prediction() {
+  const [unit, setUnit] = useState<DistanceUnit>("km");
   const [previousDistance, setPreviousDistance] = useState("5");
   const [previousTime, setPreviousTime] = useState({
     hours: "0",
@@ -62,9 +64,27 @@ function Prediction() {
   return (
     <main className="prediction-page">
       <header className="prediction-header">
-        <p className="prediction-kicker">Race equivalency</p>
-        <h1>Race predictor</h1>
-        <p>Compare five established ways to project your next race.</p>
+        <div>
+          <p className="prediction-kicker">Race equivalency</p>
+          <h1>Race predictor</h1>
+          <p>Compare five established ways to project your next race.</p>
+        </div>
+        <div className="pace-unit-group" aria-label="Distance unit">
+          <button
+            type="button"
+            aria-pressed={unit === "km"}
+            onClick={() => setUnit("km")}
+          >
+            km
+          </button>
+          <button
+            type="button"
+            aria-pressed={unit === "mi"}
+            onClick={() => setUnit("mi")}
+          >
+            miles
+          </button>
+        </div>
       </header>
 
       <section className="prediction-inputs" aria-label="Prediction inputs">
@@ -78,6 +98,7 @@ function Prediction() {
             label="Distance"
             value={previousDistance}
             onChange={setPreviousDistance}
+            unit={unit}
           />
           <TimeField
             legend="Finish time"
@@ -100,6 +121,7 @@ function Prediction() {
                 label="Distance"
                 value={secondDistance}
                 onChange={setSecondDistance}
+                unit={unit}
                 required
               />
               <TimeField
@@ -139,6 +161,7 @@ function Prediction() {
               label="Target distance"
               value={targetDistance}
               onChange={setTargetDistance}
+              unit={unit}
             />
           ) : (
             <TimeField
@@ -164,8 +187,9 @@ function Prediction() {
                   ? `${formatRaceTime(prediction.averageSeconds)} (${formatPace(
                       prediction.averageSeconds,
                       Number(targetDistance),
+                      unit,
                     )})`
-                  : formatDistance(prediction.averageDistanceKm)}
+                  : formatDistance(prediction.averageDistanceKm, unit)}
               </strong>
             </div>
           )}
@@ -192,8 +216,9 @@ function Prediction() {
                       ? `${formatRaceTime(model.seconds)} (${formatPace(
                           model.seconds,
                           Number(targetDistance),
+                          unit,
                         )})`
-                      : formatDistance(model.distanceKm)}
+                      : formatDistance(model.distanceKm, unit)}
                   </strong>
                 )}
               </article>
@@ -272,12 +297,14 @@ function DistanceField({
   label,
   value,
   onChange,
+  unit,
   required = false,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
+  unit: DistanceUnit;
   required?: boolean;
 }) {
   const isPreset = raceDistances.some(
@@ -306,17 +333,29 @@ function DistanceField({
           <input
             id={`${id}-exact`}
             type="number"
-            aria-label={`${label}, exact kilometres`}
+            aria-label={`${label}, exact ${unit === "km" ? "kilometres" : "miles"}`}
             inputMode="decimal"
             min="0.01"
             step="0.01"
             required={required}
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
+            value={distanceFromKm(value, unit)}
+            onChange={(event) => onChange(distanceToKm(event.target.value, unit))}
           />
-          <span>km</span>
+          <span>{unit}</span>
         </label>
       </div>
     </div>
   );
+}
+
+const KM_PER_MILE = 1.609344;
+
+function distanceFromKm(value: string, unit: DistanceUnit) {
+  if (value === "" || unit === "km") return value;
+  return (Number(value) / KM_PER_MILE).toFixed(3).replace(/\.?0+$/, "");
+}
+
+function distanceToKm(value: string, unit: DistanceUnit) {
+  if (value === "" || unit === "km") return value;
+  return (Number(value) * KM_PER_MILE).toString();
 }

@@ -217,8 +217,15 @@ select:focus-visible {
 }
 
 .prediction-header {
-  max-width: 660px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
   margin-bottom: 32px;
+}
+
+.prediction-header > div:first-child {
+  max-width: 660px;
 }
 
 .prediction-header h1,
@@ -607,6 +614,11 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 520px) {
+  .prediction-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .distance-controls {
     grid-template-columns: minmax(0, 1fr);
   }

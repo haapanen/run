@@ -31,6 +31,10 @@ export type CriticalSpeedEffort = {
   distanceKm: number;
 };
 
+export type DistanceUnit = "km" | "mi";
+
+const KM_PER_MILE = 1.609344;
+
 const RIEGEL_EXPONENT = 1.06;
 
 function riegelTime(
@@ -345,12 +349,20 @@ export function formatRaceTime(seconds: number | undefined) {
     : `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-export function formatPace(seconds: number | undefined, distanceKm: number) {
+export function formatPace(
+  seconds: number | undefined,
+  distanceKm: number,
+  unit: DistanceUnit = "km",
+) {
   if (distanceKm <= 0 || !Number.isFinite(distanceKm)) return "—";
-  return `${formatRaceTime(seconds === undefined ? undefined : seconds / distanceKm)} min/km`;
+  const distance = unit === "mi" ? distanceKm / KM_PER_MILE : distanceKm;
+  return `${formatRaceTime(seconds === undefined ? undefined : seconds / distance)} min/${unit}`;
 }
 
-export function formatDistance(distanceKm: number | undefined) {
+export function formatDistance(
+  distanceKm: number | undefined,
+  unit: DistanceUnit = "km",
+) {
   if (
     distanceKm === undefined ||
     !Number.isFinite(distanceKm) ||
@@ -358,5 +370,6 @@ export function formatDistance(distanceKm: number | undefined) {
   ) {
     return "—";
   }
-  return `${distanceKm.toFixed(distanceKm < 10 ? 2 : 1)} km`;
+  const distance = unit === "mi" ? distanceKm / KM_PER_MILE : distanceKm;
+  return `${distance.toFixed(distance < 10 ? 2 : 1)} ${unit}`;
 }
