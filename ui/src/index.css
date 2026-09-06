@@ -507,14 +507,14 @@ select:focus-visible {
 
 table {
   width: 100%;
-  min-width: 680px;
+  min-width: 640px;
   border-collapse: collapse;
   font-size: 13px;
 }
 
 th,
 td {
-  padding: 8px 12px;
+  padding: 5px 10px;
   border-bottom: 1px solid var(--border);
   text-align: right;
   white-space: nowrap;
@@ -550,8 +550,8 @@ tbody tr:last-child td {
 }
 
 .custom-label {
-  display: block;
-  margin-bottom: 5px;
+  display: inline-block;
+  margin-right: 8px;
   color: var(--accent);
   font-size: 11px;
   font-weight: 700;
@@ -559,15 +559,16 @@ tbody tr:last-child td {
 }
 
 .custom-pace-fields {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
+  vertical-align: middle;
 }
 
 .custom-pace-fields input {
-  width: 74px;
-  height: 34px;
-  padding: 0 8px;
+  width: 66px;
+  height: 30px;
+  padding: 0 7px;
 }
 
 .pace-value small {

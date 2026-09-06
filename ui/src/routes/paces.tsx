@@ -59,7 +59,7 @@ function Paces() {
               <tr className="custom-row">
                 <td className="pace-value">
                   <label className="custom-label" htmlFor="pace">
-                    Custom pace
+                    Custom
                   </label>
                   <div className="custom-pace-fields">
                     <input
