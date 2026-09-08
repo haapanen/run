@@ -53,6 +53,7 @@ function Paces() {
                 {chart.customRow.projections.map((projection) => (
                   <th key={projection.name}>{projection.name}</th>
                 ))}
+                <th>Cooper distance</th>
               </tr>
             </thead>
             <tbody>
@@ -78,6 +79,7 @@ function Paces() {
                     {projection.finishTime}
                   </td>
                 ))}
+                <td>{chart.customRow.cooperDistance}</td>
               </tr>
               {chart.rows.map((row) => (
                 <tr key={row.pace}>
@@ -90,6 +92,7 @@ function Paces() {
                       {projection.finishTime}
                     </td>
                   ))}
+                  <td>{row.cooperDistance}</td>
                 </tr>
               ))}
             </tbody>

@@ -296,10 +296,15 @@ select:focus-visible {
 
 .distance-controls select,
 .distance-controls input,
+.time-preset,
 .time-inputs input {
   width: 100%;
   height: 44px;
   padding: 0 12px;
+}
+
+.time-preset {
+  margin-bottom: 8px;
 }
 
 .exact-distance,

@@ -168,6 +168,7 @@ function Prediction() {
               legend="Target time"
               value={targetTime}
               onChange={setTargetTime}
+              presets={targetTimePresets}
             />
           )}
         </div>
@@ -248,6 +249,12 @@ function Prediction() {
 
 type TimeValue = { hours: string; minutes: string; seconds: string };
 
+const targetTimePresets = [
+  { label: "Cooper test (12 min)", seconds: 12 * 60 },
+  { label: "30 min", seconds: 30 * 60 },
+  { label: "60 min", seconds: 60 * 60 },
+] as const;
+
 function timeToSeconds(value: TimeValue) {
   return (
     Number(value.hours) * 3600 +
@@ -256,18 +263,33 @@ function timeToSeconds(value: TimeValue) {
   );
 }
 
+function secondsToTimeValue(totalSeconds: number): TimeValue {
+  return {
+    hours: Math.floor(totalSeconds / 3600).toString(),
+    minutes: Math.floor((totalSeconds % 3600) / 60).toString(),
+    seconds: (totalSeconds % 60).toString(),
+  };
+}
+
 function TimeField({
   legend,
   value,
   onChange,
   required = false,
+  presets,
 }: {
   legend: string;
   value: TimeValue;
   onChange: (value: TimeValue) => void;
   required?: boolean;
+  presets?: ReadonlyArray<{ label: string; seconds: number }>;
 }) {
   const id = useId();
+  const selectedPreset = presets?.some(
+    (preset) => preset.seconds === timeToSeconds(value),
+  )
+    ? timeToSeconds(value).toString()
+    : "custom";
   const fields = [
     { key: "hours", label: "hr", max: undefined },
     { key: "minutes", label: "min", max: 59 },
@@ -277,6 +299,25 @@ function TimeField({
   return (
     <fieldset className="time-field">
       <legend>{legend}</legend>
+      {presets && (
+        <select
+          className="time-preset"
+          aria-label={`${legend} preset`}
+          value={selectedPreset}
+          onChange={(event) => {
+            if (event.target.value !== "custom") {
+              onChange(secondsToTimeValue(Number(event.target.value)));
+            }
+          }}
+        >
+          {presets.map((preset) => (
+            <option key={preset.seconds} value={preset.seconds}>
+              {preset.label}
+            </option>
+          ))}
+          <option value="custom">Custom</option>
+        </select>
+      )}
       <div className="time-inputs">
         {fields.map((field) => (
           <label key={field.key} htmlFor={`${id}-${field.key}`}>

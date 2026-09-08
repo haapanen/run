@@ -37,11 +37,21 @@ function formatElapsedTime(hours: number) {
     : `${minutesPart}:${seconds}`;
 }
 
+function formatCooperDistance(paceSeconds: number, kmPerUnit: number) {
+  if (!Number.isFinite(paceSeconds) || paceSeconds <= 0) return "--";
+
+  return `${Math.round((12 * 60 * kmPerUnit * 1000) / paceSeconds)} m`;
+}
+
 function createPaceRow(paceSeconds: number, unit: PaceUnit) {
   const unitDefinition = paceUnits[unit];
 
   return {
     pace: formatElapsedTime(paceSeconds / 3600),
+    cooperDistance: formatCooperDistance(
+      paceSeconds,
+      unitDefinition.kmPerUnit,
+    ),
     projections: distances.map((distance) => ({
       name: distance.name,
       finishTime: formatElapsedTime(
