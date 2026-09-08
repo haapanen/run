@@ -101,7 +101,7 @@ function criticalSpeedParameters(
     (secondEffort.seconds - previousSeconds);
   const distancePrime = previousDistanceKm - criticalSpeed * previousSeconds;
 
-  if (criticalSpeed <= 0 || distancePrime <= 0) return undefined;
+  if (criticalSpeed <= 0 || distancePrime < 0) return undefined;
 
   return { criticalSpeed, distancePrime };
 }

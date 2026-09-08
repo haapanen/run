@@ -17,13 +17,22 @@ const RootLayout = () => (
         >
           Paces
         </Link>
-        <Link
-          to="/prediction"
-          activeProps={{ "aria-current": "page" }}
-          className="site-nav-link"
-        >
-          Prediction
-        </Link>
+        <div className="site-nav-group">
+          <Link
+            to="/prediction"
+            activeProps={{ "aria-current": "page" }}
+            className="site-nav-link"
+          >
+            Prediction
+          </Link>
+          <Link
+            to="/prediction/cooper"
+            activeProps={{ "aria-current": "page" }}
+            className="site-subnav-link"
+          >
+            Cooper test
+          </Link>
+        </div>
       </nav>
     </header>
     <Outlet />

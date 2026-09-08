@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PacesRouteImport } from './routes/paces'
 import { Route as PredictionRouteImport } from './routes/prediction'
+import { Route as PredictionCooperRouteImport } from './routes/prediction_.cooper'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const PredictionRoute = PredictionRouteImport.update({
   path: '/prediction',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PredictionCooperRoute = PredictionCooperRouteImport.update({
+  id: '/prediction_/cooper',
+  path: '/prediction/cooper',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/paces': typeof PacesRoute
   '/prediction': typeof PredictionRoute
+  '/prediction/cooper': typeof PredictionCooperRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/paces': typeof PacesRoute
   '/prediction': typeof PredictionRoute
+  '/prediction/cooper': typeof PredictionCooperRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/paces': typeof PacesRoute
   '/prediction': typeof PredictionRoute
+  '/prediction_/cooper': typeof PredictionCooperRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/paces' | '/prediction'
+  fullPaths: '/' | '/paces' | '/prediction' | '/prediction/cooper'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/paces' | '/prediction'
-  id: '__root__' | '/' | '/paces' | '/prediction'
+  to: '/' | '/paces' | '/prediction' | '/prediction/cooper'
+  id: '__root__' | '/' | '/paces' | '/prediction' | '/prediction_/cooper'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PacesRoute: typeof PacesRoute
   PredictionRoute: typeof PredictionRoute
+  PredictionCooperRoute: typeof PredictionCooperRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PredictionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prediction_/cooper': {
+      id: '/prediction_/cooper'
+      path: '/prediction/cooper'
+      fullPath: '/prediction/cooper'
+      preLoaderRoute: typeof PredictionCooperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PacesRoute: PacesRoute,
   PredictionRoute: PredictionRoute,
+  PredictionCooperRoute: PredictionCooperRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
